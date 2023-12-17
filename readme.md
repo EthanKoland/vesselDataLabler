@@ -10,7 +10,12 @@
 * the next 3 blocks is for selection the size of the brush. The top most one is the smallest and the bottom most one is the largest.
 * to undo small changes, press the q arrow key and the w key for redo changes.
 * to undo large changes, press the z arrow key and the x key for redo changes.
-* Currently the size buttons do not work
+* The side buttons currenlty work to save and load the image
+
+# TODO
+* Allow for choosing where the outputs are saved
+* Save the Numpy array of the image
+* Allow the user to parse all of the images in a the queue
 
 # Notes on the Frangi Filter - FrangiFilter/frangiFilter2DTest.py
 * Even with configuring the different parameter there is still poor predictions
