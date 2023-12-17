@@ -1,0 +1,13 @@
+.venv
+.vscode
+CSAngioImages
+FrangiFilter.zip
+*/__pycache__
+*/.ipynb_checkpoints
+*/.idea
+*/.DS_Store
+*/.git
+*/.gitignore
+*/.gitattributes
+*/.vscode
+.DS_Store
