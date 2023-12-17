@@ -1,4 +1,5 @@
 import tkinter as tk
+import math
 
 class WhiteboardApp:
     def __init__(self, root):
@@ -59,9 +60,39 @@ class WhiteboardApp:
 
     def draw_or_erase(self, event):
         if self.drawing:
-            x, y = event.x, event.y
-            self.canvas.create_line(self.last_x, self.last_y, x, y, fill="black", width=2)
-            self.last_x, self.last_y = x, y
+            prevX, prevY = int(self.last_x), int(self.last_y)
+            endX, endY = event.x, event.y
+            print(prevX, prevY, endX, endY)
+            if(prevX == endX):
+                minY = min(prevY, endY)
+                maxY = max(prevY, endY)
+                for i in range(minY, maxY):
+                    self.canvas.create_line(endX, i , endX+1, i+1, fill="black")
+                pass
+            elif(prevY == endY):
+                minX = min(prevX, endX)
+                maxX = max(prevX, endX)
+                for i in range(minX, maxX):
+                    self.canvas.create_line(i, endY, i+1, endY+1, fill="black")
+                pass
+            else:
+                slope = (endY - prevY) / (endX - prevX)
+                b = prevY - slope * prevX
+                minX = min(prevX, endX)
+                maxX = max(prevX, endX)
+                # for i in range(minX, maxX):
+                #     newY = slope + prevY
+                #     self.canvas.create_line(i, prevY, i+1, newY, fill="black")
+                #     prevY = newY
+                points = [(newX,round(newX * slope + b)) for newX in range(minX, maxX+1)]
+                for newX, newY in points:
+                    self.canvas.create_line(prevX, prevY, newX, newY, fill="black", width=1)
+                    prevX = newX
+                    prevY = newY
+                    self.last_x, self.last_y = prevX, prevY
+                
+                
+            self.last_x, self.last_y = endX, endY
         elif self.erasing:
             x, y = event.x, event.y
             self.canvas.create_rectangle(x - 5, y - 5, x + 5, y + 5, fill="white", outline="white")
