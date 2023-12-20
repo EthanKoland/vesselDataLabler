@@ -154,13 +154,17 @@ class vesselEditor(tk.Tk):
         #Check if the directory exists
         if(exists(self.data["outputLocation"]["Value"])):
             filePath = join(self.data["outputLocation"]["Value"], imageName)
-            cv2.imwrite(filePath + "_mask.jpg", mask*255)
+            m2 = mask*255
+            m2 = np.round(m2)
+            cv2.imwrite(filePath + "_mask.jpg", m2)
         else:
             tk.messagebox.showerror('Folder Not found', f'Unable to save image, output folder,{self.data["outputLocation"]["Value"]}, not found')
         
         if(exists(self.data["FilterLocation"]["Value"])):
             filePath = join(self.data["FilterLocation"]["Value"], imageName)
-            cv2.imwrite(filePath + "_filtermask.jpg", filterMask*255)
+            m2 = filterMask*255
+            m2 = np.round(m2)
+            cv2.imwrite(filePath + "_filtermask.jpg", m2)
         else:
             tk.messagebox.showerror('Folder Not found', f'Unable to save image, output folder,{self.data["outputLocation"]["Value"]}, not found')
     
@@ -218,13 +222,15 @@ class vesselEditor(tk.Tk):
         if(exists(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))):
             print("filter mask found")
             filterMask = cv2.imread(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))
-            filterMask = cv2.cvtColor(filterMask, cv2.COLOR_BGR2GRAY)
-            self.canvas.drawMask(mask)
+            filterMask = cv2.cvtColor(filterMask, cv2.COLOR_BGR2GRAY)/255
+            filterMask = np.round(filterMask)
+            self.canvas.drawMask(filterMask)
         
         if(exists(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))):
             print("mask found")
             mask = cv2.imread(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))
-            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)/255
+            mask = np.round(mask)
             self.canvas.drawMask(mask)
         
         
