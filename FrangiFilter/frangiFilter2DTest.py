@@ -10,7 +10,7 @@ from skimage.color import rgb2gray, gray2rgb
 from skimage.filters import threshold_otsu, try_all_threshold
 
 def initTest():
-    img = imread("FrangiFilter/CS.bmp")
+    img = imread("FrangiFilter/0002.jpg")
     plt.imshow(img)
     plt.show()
 
@@ -29,7 +29,7 @@ def initTest():
     plt.show()
     
 def testScaleRange(FrangiScaleRange, FrangiScaleRatio=2, FrangiBetaOne=0.8, FrangiBetaTwo=15, col = 3, row = 3):
-    img = cv2.imread("FrangiFilter/CS.bmp")
+    img = cv2.imread("CSAngioImages/0032.jpg")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)/255.
     
     scales = []
@@ -37,8 +37,8 @@ def testScaleRange(FrangiScaleRange, FrangiScaleRatio=2, FrangiBetaOne=0.8, Fran
     for i in FrangiScaleRange:
         scales.append(FrangiFilter2D(gray,FrangiScaleRange=[i], FrangiScaleRatio=1, FrangiBetaOne=FrangiBetaOne, FrangiBetaTwo=FrangiBetaTwo))
         
-    # pltUnified(gray, scales, FrangiScaleRange)
-    pltSeperate(gray, scales, col, row)
+    pltUnified(gray, scales, FrangiScaleRange)
+    #pltSeperate(gray, scales, col, row)
     
 def testFrangiBetaOne(FrangiBetaOneValues,FrangiScaleRange = np.arange(1,10), FrangiScaleRatio=2, FrangiBetaTwo=15):
     img = cv2.imread("FrangiFilter/CS.bmp")
@@ -122,7 +122,7 @@ def pltUnified(img, scales, legend):
     axs[1][1].set_ylabel('Number of Pixels')
     axs[1][1].legend()
     
-        
+    plt.tight_layout()
     plt.show()
     
     

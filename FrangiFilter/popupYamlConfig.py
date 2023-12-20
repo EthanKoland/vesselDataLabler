@@ -3,6 +3,7 @@
 # tkinter and ttk module
 from tkinter import *
 from tkinter.ttk import *
+from tkinter import filedialog
 
  
 # class NewWindow(Toplevel):
@@ -77,6 +78,10 @@ class dataEnties(Frame):
             elif(upperItemType == 'FLOAT'):
                 self.tkVars[key] = DoubleVar(value=itemValue)
                 item = dataEntry(self, key, self.tkVars[key], itemType, floatChars)
+                item.grid(column=0, row=i, sticky=W + E, columnspan=2)
+            elif(upperItemType == 'FOLDER'):
+                self.tkVars[key] = StringVar(value=itemValue)
+                item = FolderSelector(self, key, self.tkVars[key], itemType, floatChars)
                 item.grid(column=0, row=i, sticky=W + E, columnspan=2)
             else:
                 self.tkVars[key] = StringVar(value=itemValue)
@@ -176,6 +181,31 @@ class TFdropdown(Frame):
         self.label.configure(text=self.localValue.get())
         self.value.set(self.localValue.get())
         
+class FolderSelector(Frame):
+    def __init__(self, parent, label, value, itemType, validChars = '0123456789.-+'):
+        super().__init__(parent)
+        self.cleanedLabel = value.get().split("/")[-1]
+        self.label = Label(self, text=label )
+        self.value = value
+        self.validChars = validChars
+        self.itemType = itemType
+        
+        self.valueEntry = Button(self, text=self.cleanedLabel, command=self.selectFolder)
+        # self.valueEntry.insert(0, self.value.get())
+        # self.valueEntry.bind("<FocusOut>", print("Focus Out"))
+        
+        self.label.grid(column=0, row=0, sticky=W + E)
+        self.valueEntry.grid(column=1, row=0, sticky=W + E)
+        
+    def selectFolder(self):
+        self.value.set(filedialog.askdirectory())
+        self.valueEntry.configure(text=self.value.get().split("/")[-1])
+        
+    def update(self, t):
+        print(self.valueEntry.get(), self.value.get())
+        print("update", self.label.cget("text"))
+        self.value = self.valueEntry.get()
+        
      
         
     
@@ -260,6 +290,11 @@ if(__name__ == "__main__"):
                 "Type" : 'Bool',
                 "Description" : 'Detect black ridges (default) set to true, for white ridges set to false.',
             },
+            "OutputFolder":{
+                "Value" : "output",
+                "Type" : 'Folder',
+                "Description" : 'Output folder for the images',
+            }
         }
     
     # Following line will bind click event

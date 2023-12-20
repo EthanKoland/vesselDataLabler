@@ -1,13 +1,16 @@
 import tkinter as tk
 import numpy as np
 import tkinter.filedialog
-from os.path import isfile
+from os.path import isfile, exists, join
 from os import listdir
 from glob import glob
 from popupYamlConfig import congMenu
 from frangiFilter2D import FrangiFilter2D
 from skimage.filters import threshold_otsu
 import cv2
+import multiprocessing
+from functools import partial
+
 
 from PIL import Image, ImageTk
 
@@ -54,11 +57,28 @@ class vesselEditor(tk.Tk):
                 "Type" : 'Bool',
                 "Description" : 'Detect black ridges (default) set to true, for white ridges set to false.',
             },
+            "outputLocation": {
+                "Value" : "finalImages",
+                "Type" : 'Folder',
+                "Description" : 'The realitive path to the output folder',
+            },
+            #Do I want to include this: 
+            #Allow storing of the filtter,s could be used as a checkpoint
+            #More complicated logic because i need to check another file location to see if it is valid
+            #What to do in the case it doesn't exist
+            
+            "FilterLocation": {
+                "Value" : "filterMasks",
+                "Type" : 'Folder',
+                "Description" : 'Location to the folder where to save the raw masks',
+            },
         }
         
         self.currentImage = "FrangiFilter/0002.jpg"
         self.imageQueue = []
         self.previousImages = []
+        
+
         
         
         self.canvas = canvasEditior(self)
@@ -67,10 +87,8 @@ class vesselEditor(tk.Tk):
         self.labelFrame = tk.LabelFrame(self, text="Image Info")
         self.labelFrame.grid(column=1, row=0, sticky=(tk.N,tk.W,tk.E,tk.S))
         
-        
         self.loadFolder_button = tk.Button(self.labelFrame, text="Load Folder", command=self.loadFolder)
         self.loadFolder_button.pack()
-        
         
         self.loadImage_button = tk.Button(self.labelFrame, text="Load Image", command=self.loadImage)
         self.loadImage_button.pack()
@@ -90,6 +108,9 @@ class vesselEditor(tk.Tk):
         self.filterImage_button = tk.Button(self.labelFrame, text="Filter Image", command=self.filterImage)
         self.filterImage_button.pack()
         
+        self.filterQueue_button = tk.Button(self.labelFrame, text = "Filter All Images", command = self.filterQueue)
+        self.filterQueue_button.pack()
+        #
         
         
         self.mainloop()
@@ -107,6 +128,8 @@ class vesselEditor(tk.Tk):
         
     def loadImage(self):
         print("load image")
+        
+        
         filename = tk.filedialog.askopenfilename(initialdir = "/",
                                             title = "Select a File",
                                             filetypes = (("JPG Files",
@@ -121,27 +144,90 @@ class vesselEditor(tk.Tk):
     def saveImage(self):
         print("save image")
         mask = self.canvas.returnMask()
-        cv2.imwrite(self.currentImage[:-4] + "_mask.jpg", mask*255)
-        pass
+        filterMask = self.canvas.filterMask
+        #Where do i want to check if the diretory exists, could do it here or when a new folder is selected. Is there any fowenside to doing both besides 
+        #run time perfromace hit
+        
+        imageName = self.currentImage.split("/")[-1]
+        imageName = imageName.split(".")[0]
+        
+        #Check if the directory exists
+        if(exists(self.data["outputLocation"]["Value"])):
+            filePath = join(self.data["outputLocation"]["Value"], imageName)
+            cv2.imwrite(filePath + "_mask.jpg", mask*255)
+        else:
+            tk.messagebox.showerror('Folder Not found', f'Unable to save image, output folder,{self.data["outputLocation"]["Value"]}, not found')
+        
+        if(exists(self.data["FilterLocation"]["Value"])):
+            filePath = join(self.data["FilterLocation"]["Value"], imageName)
+            cv2.imwrite(filePath + "_filtermask.jpg", filterMask*255)
+        else:
+            tk.messagebox.showerror('Folder Not found', f'Unable to save image, output folder,{self.data["outputLocation"]["Value"]}, not found')
     
     def nextImage(self):
         print("next image")
         
         if(len(self.imageQueue) == 0):
             return
-        self.saveImage()
+        # self.saveImage()
         self.previousImages.append(self.currentImage)
         self.currentImage = self.imageQueue.pop(0)
-        
         self.canvas.changeImage(self.currentImage)
-        pass
+        
+        imageName = self.currentImage.split("/")[-1]
+        imageName = imageName.split(".")[0]
+        self.canvas.changeImage(self.currentImage)
+        
+        print(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))
+        print(exists(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg")))
+        
+        print(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))
+        print(exists(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg")))
+        
+        if(exists(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))):
+            print("filter mask found")
+            filterMask = cv2.imread(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))
+            filterMask = cv2.cvtColor(filterMask, cv2.COLOR_BGR2GRAY)/255.
+            filterMask = np.round(filterMask)
+            self.canvas.drawMask(filterMask)
+        
+        if(exists(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))):
+            print("mask found")
+            mask = cv2.imread(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))
+            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)/255.
+            mask = np.round(mask)
+            self.canvas.drawMask(mask)
     
     def prevoiusImage(self):
         print("previous image")
-        self.saveImage()
+        # self.saveImage()
         self.imageQueue.insert(0, self.currentImage)
         self.currentImage = self.previousImages.pop()
+        
+        #Check if there is an existing mask for the image
+        imageName = self.currentImage.split("/")[-1]
+        imageName = imageName.split(".")[0]
         self.canvas.changeImage(self.currentImage)
+        
+        print(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))
+        print(exists(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg")))
+        
+        print(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))
+        print(exists(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg")))
+        
+        if(exists(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))):
+            print("filter mask found")
+            filterMask = cv2.imread(join(self.data["FilterLocation"]["Value"], imageName + "_filtermask.jpg"))
+            filterMask = cv2.cvtColor(filterMask, cv2.COLOR_BGR2GRAY)
+            self.canvas.drawMask(mask)
+        
+        if(exists(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))):
+            print("mask found")
+            mask = cv2.imread(join(self.data["outputLocation"]["Value"], imageName + "_mask.jpg"))
+            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+            self.canvas.drawMask(mask)
+        
+        
         pass
     
     def parameters(self):
@@ -165,14 +251,89 @@ class vesselEditor(tk.Tk):
                               FrangiBetaOne=FrangiBetaOne, FrangiBetaTwo=FrangiBetaTwo,
                               verbose=verbose, BlackWhite=BlackWhite)
         
-        m1 = mask[0] > threshold_otsu(mask[0], nbins=256)
+        #Get the base name of the image file
+        imageName = self.currentImage.split("/")[-1]
+        imageName = imageName.split(".")[0]
         
-        self.canvas.drawMask(m1)
+        grayout = cv2.normalize(mask[0], None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
+
+        # Otsu's thresholding
+
+        ret2,th2 = cv2.threshold(grayout,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+        # manual threshold
+
+        ret2,th2 = cv2.threshold(grayout,8,255,cv2.THRESH_BINARY)
+     
+        m2 = th2 == 255
+        
+        
+        if(exists(self.data["FilterLocation"]["Value"])):
+            #Output the mask
+            filePath = join(self.data["FilterLocation"]["Value"], imageName)
+            cv2.imwrite(filePath + "_filtermask.jpg", m2*255)
+        
+        self.canvas.drawMask(m2)
         print("success")
 
     def filterQueue(self):
         print("filter queue")
+        
+        filterLocation = self.data["FilterLocation"].get("Value", "filterMasks")
+        FrangiScaleRange = (self.data["FrangiScaleLowerBound"].get("Value", 1), self.data["FrangiScaleUpperBound"].get("Value", 1))
+        FrangiScaleRatio = self.data["FrangiScaleRatio"].get("Value", 2)
+        FrangiBetaOne = self.data["FrangiBetaOne"].get("Value", 0.5)
+        FrangiBetaTwo = self.data["FrangiBetaTwo"].get("Value", 15)
+        verbose = self.data["Verbose"].get("Value", False)
+        BlackWhite = self.data["BlackWhite"].get("Value", True)
+        
+        pool = multiprocessing.Pool()
+        #mappedResults = pool.map(partial(mergeController, debug=debug, **kwargs), data.items())
+        mappedResults = pool.map(partial(filter,filterloaction = filterLocation, FrangiScaleRange=FrangiScaleRange,
+                                         FrangiScaleRatio=FrangiScaleRatio, FrangiBetaOne=FrangiBetaOne, 
+                                         FrangiBetaTwo=FrangiBetaTwo, verbose=verbose, BlackWhite=BlackWhite), self.imageQueue)
+        
+        
+            
         pass
+    
+def filter(imagePath, **kwargs):
+    
+
+    FrangiScaleRange = kwargs.get("FrangiScaleRange", (1,10))
+    FrangiScaleRatio = kwargs.get("FrangiScaleRatio", 2)
+    FrangiBetaOne = kwargs.get("FrangiBetaOne", 0.5)
+    FrangiBetaTwo = kwargs.get("FrangiBetaTwo", 15)
+    verbose = kwargs.get("verbose", False)
+    BlackWhite = kwargs.get("BlackWhite", True)
+    filterlocation = kwargs.get("filterloaction", "filterMasks")
+
+    image = cv2.imread(imagePath)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)/255.
+
+    mask = FrangiFilter2D(gray,FrangiScaleRange=FrangiScaleRange, FrangiScaleRatio=FrangiScaleRatio,
+                            FrangiBetaOne=FrangiBetaOne, FrangiBetaTwo=FrangiBetaTwo,
+                            verbose=verbose, BlackWhite=BlackWhite)
+
+    grayout = cv2.normalize(mask[0], None, 255, 0, cv2.NORM_MINMAX, cv2.CV_8U)
+    ret2,th2 = cv2.threshold(grayout,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    # manual threshold
+
+    # ret2,th2 = cv2.threshold(grayout,8,255,cv2.THRESH_BINARY)
+
+    m2 = th2 == 255
+
+    imageName = imagePath.split("/")[-1]
+    imageName = imageName.split(".")[0]
+
+    if(exists(filterlocation)):
+        #Output the mask
+        filePath = join(filterlocation, imageName)
+        cv2.imwrite(filePath + "_filtermask.jpg", m2*255)
+        
+    return m2
+        
 
 
 class canvasEditior(tk.Frame):
@@ -201,6 +362,7 @@ class canvasEditior(tk.Frame):
     
 
         self.mask = np.zeros((self.imageObject.width(), self.imageObject.height()))
+        self.filterMask = np.zeros((self.imageObject.width(), self.imageObject.height()))
 
         self.canvas.grid(column=0, row=0, sticky=(tk.N,tk.W,tk.E,tk.S))
         self.canvas.focus_set()
@@ -287,8 +449,8 @@ class canvasEditior(tk.Frame):
             for i in range(minY, maxY):
                 dx1, dy1, dx2, dy2 = endX - lineRange, i-lineRange , endX+lineRange, i+lineRange
                 #item = self.canvas.create_line(endX, i , endX+1, i+1, fill=color, width=lineWidth)
-                item = self.canvas.create_oval(dx1, dy1, dx2, dy2, fill=color, outline=color, width=0)
-                self.mask[int(dx1):int(dx2), int(dy1):int(dy2)] = 1
+                item = self.canvas.create_rectangle(dx1, dy1, dx2, dy2, fill=color, outline=color, width=0)
+                self.mask[int(dy1):int(dy2), int(dx1):int(dx2)] = 1
                 if(append):
                     self.drawActions.append(('draw', lineWidth, color,dx1, dy1, dx2, dy2))
                     self.currentAction.append(('draw',lineWidth, color, dx1, dy1, dx2, dy2, item))
@@ -297,8 +459,8 @@ class canvasEditior(tk.Frame):
             for i in range(minX, maxX):
                 dx1, dy1, dx2, dy2 = i-lineRange, endY - lineRange, i+lineRange, endY+lineRange
                 # item = self.canvas.create_line(i, endY, i+1, endY+1,fill=color, width=lineWidth)
-                item = self.canvas.create_oval(dx1, dy1, dx2, dy2,fill=color, outline=color, width=0)
-                self.mask[int(dx1):int(dx2), int(dy1):int(dy2)] = 1
+                item = self.canvas.create_rectangle(dx1, dy1, dx2, dy2,fill=color, outline=color, width=0)
+                self.mask[int(dy1):int(dy2), int(dx1):int(dx2)] = 1
                 if(append):
                     self.drawActions.append(('draw', lineWidth, color, dx1, dy1, dx2, dy2))
                     self.currentAction.append(('draw',lineWidth, color, dx1, dy1, dx2, dy2, item))
@@ -315,8 +477,8 @@ class canvasEditior(tk.Frame):
             for newX, newY in points:
                 dx1, dy1, dx2, dy2 = newX- lineRange, newY- lineRange, newX + lineRange , newY + lineRange
                 #item = self.canvas.create_line(prevX - lineRange, prevY - lineRange, newX + lineRange, newY + lineRange,fill=color, width=lineWidth)
-                item = self.canvas.create_oval(dx1, dy1, dx2, dy2,fill=color, width=0, outline=color)
-                self.mask[int(dx1):int(dx2), int(dy1):int(dy2)] = 1
+                item = self.canvas.create_rectangle(dx1, dy1, dx2, dy2,fill=color, width=0, outline=color)
+                self.mask[ int(dy1):int(dy2), int(dx1):int(dx2)] = 1
                 if(append):
                     self.drawActions.append(('draw', lineWidth, color,dx1, dy1, dx2, dy2))
                     self.currentAction.append(('draw',lineWidth, color, dx1, dy1, dx2, dy2, item))
@@ -411,8 +573,10 @@ class canvasEditior(tk.Frame):
     def addLine(self, event):
         self.currentx, self.currenty = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         
-    def drawMask(self, mask):
+    def drawMask(self, mask, createFilterMask = True):
         self.mask = mask.copy()
+        if(createFilterMask):
+            self.filterMask = mask.copy()
         #Clear the canvas
         for item in self.canvas.find_all():
             if item not in [self.canvasImage, self.draw, self.eraseButton, self.smallBrush, self.medBrush, self.largeBrush]:
@@ -421,7 +585,7 @@ class canvasEditior(tk.Frame):
             for j in range(mask.shape[1]):
                 if(mask[i,j] == 1):
                     x, y = self.canvas.canvasx(j), self.canvas.canvasy(i)
-                    self.canvas.create_rectangle(x, y, x+1, y+1, fill="yellow")
+                    self.canvas.create_rectangle(x, y, x+1, y+1, fill="yellow", outline="yellow", width=0)
         
     def eraseFunction(self,event):
         self.erase = True
