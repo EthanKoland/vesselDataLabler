@@ -72,16 +72,36 @@ class vesselEditor(tk.Tk):
                 "Type" : 'Folder',
                 "Description" : 'Location to the folder where to save the raw masks',
             },
+            "openingKeral": {
+                "Value" : 3,
+                "Type" : 'int',
+                "Description" : 'soze of opening kernal',
+            },
+            "openingiterations": {
+                "Value" : 1,
+                "Type" : 'Int',
+                "Description" : 'Location to the folder where to save the raw masks',
+            },
+            "closingKeral": {
+                "Value" : 3,
+                "Type" : 'int',
+                "Description" : 'soze of opening kernal',
+            },
+            "closingiterations": {
+                "Value" : 1,
+                "Type" : 'Int',
+                "Description" : 'Location to the folder where to save the raw masks',
+            },
         }
         
-        self.currentImage = "FrangiFilter/0002.jpg"
+        self.currentImage = ""
         self.imageQueue = []
         self.previousImages = []
         
 
         
         
-        self.canvas = canvasEditior(self)
+        self.canvas = canvasEditior(self, imagePath = self.currentImage)
         self.canvas.grid(column=0, row=0, sticky=(tk.N,tk.W,tk.E,tk.S))
         
         self.labelFrame = tk.LabelFrame(self, text="Image Info")
@@ -111,6 +131,13 @@ class vesselEditor(tk.Tk):
         self.filterQueue_button = tk.Button(self.labelFrame, text = "Filter All Images", command = self.filterQueue)
         self.filterQueue_button.pack()
         #
+        self.opening_button = tk.Button(self.labelFrame, text="Opening", command=self.opening)
+        self.opening_button.pack()
+        
+        self.closing_button = tk.Button(self.labelFrame, text="Closing", command=self.closing)
+        self.closing_button.pack()
+        
+        
         
         
         self.mainloop()
@@ -302,6 +329,28 @@ class vesselEditor(tk.Tk):
         
             
         pass
+    
+    def opening(self):
+        mask = self.canvas.returnMask()
+        
+        kernalSize = self.data["openingKeral"].get("Value", 3)
+        iterations = self.data["openingiterations"].get("Value", 1)
+        
+        kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernalSize, kernalSize))
+        opening = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_OPEN, kernal, iterations=iterations)
+        
+        self.canvas.drawMask(opening, createFilterMask=False)
+        
+    def closing(self):
+        mask = self.canvas.returnMask()
+        
+        kernalSize = self.data["closingKeral"].get("Value", 3)
+        iterations = self.data["closingiterations"].get("Value", 1)
+        
+        kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernalSize, kernalSize))
+        closing = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_CLOSE, kernal, iterations=iterations)
+        
+        self.canvas.drawMask(closing, createFilterMask=False)
     
 def filter(imagePath, **kwargs):
     
@@ -506,7 +555,7 @@ class canvasEditior(tk.Frame):
             if item not in [self.canvasImage, self.draw, self.eraseButton, self.smallBrush, self.medBrush, self.largeBrush]:
                 
                 dx1, dy1, dx2, dy2 = self.canvas.coords(item)
-                self.mask[int(dx1):int(dx2), int(dy1):int(dy2)] = 0
+                self.mask[int(dy1):int(dy2), int(dx1):int(dx2)] = 0
                 if(append):
                     self.drawActions.append(('erase', self.lineWidth, self.color, dx1, dy1, dx2, dy2))
                     self.currentAction.append(("",self.lineWidth, self.color, dx1, dy1, dx2, dy2))
