@@ -2,6 +2,7 @@
 .vscode
 CSAngioImages
 FrangiFilter.zip
+*.zip
 */__pycache__
 */.ipynb_checkpoints
 */.idea
