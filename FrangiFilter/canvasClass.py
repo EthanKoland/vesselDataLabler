@@ -200,7 +200,7 @@ class vesselEditor(tk.Tk):
         
         if(len(self.imageQueue) == 0):
             return
-        # self.saveImage()
+        self.saveImage()
         self.previousImages.append(self.currentImage)
         self.currentImage = self.imageQueue.pop(0)
         self.canvas.changeImage(self.currentImage)
@@ -231,7 +231,7 @@ class vesselEditor(tk.Tk):
     
     def prevoiusImage(self):
         print("previous image")
-        # self.saveImage()
+        self.saveImage()
         self.imageQueue.insert(0, self.currentImage)
         self.currentImage = self.previousImages.pop()
         
@@ -428,7 +428,7 @@ class canvasEditior(tk.Frame):
 
         self.lastx, self.lasty = 0, 0
 
-        self.lineWidth = 1
+        self.lineWidth = 3
         
         self.canvas.bind("<Button-1>", self.xy)
         self.canvas.bind("<B1-Motion>", self.draw)
@@ -445,12 +445,16 @@ class canvasEditior(tk.Frame):
         # self.erase = self.canvas.create_rectangle((10, 60, 30, 80), fill="black", tags=('palettePen', 'paletteblack', 'paletteSelected'))
         # self.canvas.tag_bind(self.erase, "<Button-1>", lambda x: self.eraseButton(x))
 
-        self.smallBrush = self.canvas.create_rectangle((10, 85, 30, 105), fill="black", tags=('paletteSize', 'palette1', 'paletteSizeSelected'))
-        self.canvas.tag_bind(self.smallBrush , "<Button-1>", lambda x:self.changeLineWidth(1))
+        self.smallBrush = self.canvas.create_rectangle((10, 85, 30, 105), fill="black", tags=('paletteSize', 'palette3', 'paletteSizeSelected'))
+        self.canvas.tag_bind(self.smallBrush , "<Button-1>", lambda x:self.changeLineWidth(3))
         self.medBrush  = self.canvas.create_rectangle((10, 110, 30, 130), fill="black", tags=('paletteSize', 'palette5'))
         self.canvas.tag_bind(self.medBrush, "<Button-1>", lambda x: self.changeLineWidth(5))
         self.largeBrush = self.canvas.create_rectangle((10, 135, 30, 155), fill="black", tags=('paletteSize', 'palette10'))
         self.canvas.tag_bind(self.largeBrush, "<Button-1>", lambda x: self.changeLineWidth(10))
+        self.xLargeBrush = self.canvas.create_rectangle((10, 160, 30, 180), fill="black", tags=('paletteSize', 'palette20'))
+        self.canvas.tag_bind(self.xLargeBrush, "<Button-1>", lambda x: self.changeLineWidth(20))
+        
+        self.configItems = [self.canvasImage, self.draw, self.eraseButton, self.smallBrush, self.medBrush, self.largeBrush, self.xLargeBrush]
         
         self.setColor('white')
         self.canvas.itemconfigure('palette', width=self.lineWidth)
@@ -497,8 +501,9 @@ class canvasEditior(tk.Frame):
         maxX = max(prevX, endX)
         minY = min(prevY, endY)
         maxY = max(prevY, endY)
-        print(prevX, prevY, endX, endY)
+        #print(prevX, prevY, endX, endY)
         lineRange = lineWidth//2
+        print(lineRange)
         
         if(prevX == endX):
             for i in range(minY, maxY):
@@ -552,7 +557,7 @@ class canvasEditior(tk.Frame):
         items = self.canvas.find_overlapping(x1, y1, x2, y2)
         # erase items except the background image
         for item in items:
-            if item not in [self.canvasImage, self.draw, self.eraseButton, self.smallBrush, self.medBrush, self.largeBrush]:
+            if item not in self.configItems:
                 
                 dx1, dy1, dx2, dy2 = self.canvas.coords(item)
                 self.mask[int(dy1):int(dy2), int(dx1):int(dx2)] = 0
@@ -634,7 +639,7 @@ class canvasEditior(tk.Frame):
             self.filterMask = mask.copy()
         #Clear the canvas
         for item in self.canvas.find_all():
-            if item not in [self.canvasImage, self.draw, self.eraseButton, self.smallBrush, self.medBrush, self.largeBrush]:
+            if item not in self.configItems:
                 self.canvas.delete(item)
         for i in range(mask.shape[0]):
             for j in range(mask.shape[1]):
