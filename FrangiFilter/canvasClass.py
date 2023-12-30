@@ -437,6 +437,14 @@ class canvasEditior(tk.Frame):
         self.canvas.bind("<B1-ButtonRelease>", self.doneStroke)
         self.canvas.bind("<z>", self.massUndo)
         self.canvas.bind("<x>", self.massRedo)
+        
+        self.canvas.bind("<1>", self.changeLineWidth(3))
+        self.canvas.bind("<2>", self.changeLineWidth(5))
+        self.canvas.bind("<3>", self.changeLineWidth(10))
+        self.canvas.bind("<4>", self.changeLineWidth(20))
+        
+        self.canvas.bind("v", self.setColor("white"))
+        self.canvas.bind("b", self.eraseFunction(""))
 
         self.draw = self.canvas.create_rectangle((10, 10, 30, 30), fill="white", tags=('palettePen', 'palettewhite'))
         self.canvas.tag_bind(self.draw , "<Button-1>", lambda x: self.setColor("white"))
