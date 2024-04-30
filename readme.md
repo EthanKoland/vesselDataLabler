@@ -13,9 +13,10 @@
 * The side buttons currenlty work to save and load the image
 
 # TODO
-* Allow for choosing where the outputs are saved
-* Save the Numpy array of the image
-* Allow the user to parse all of the images in a the queue
+* Have a shadow of the next and previous images
+* Create a version 2 of the segments
+* Clean up the repo, add some documentation
+* Make the controls more intuitive and easier to understand
 
 # Notes on the Frangi Filter - FrangiFilter/frangiFilter2DTest.py
 * Even with configuring the different parameter there is still poor predictions

@@ -58,7 +58,7 @@ class vesselEditor(tk.Tk):
                 "Description" : 'Detect black ridges (default) set to true, for white ridges set to false.',
             },
             "outputLocation": {
-                "Value" : "finalImages",
+                "Value" : "finalImagesV2",
                 "Type" : 'Folder',
                 "Description" : 'The realitive path to the output folder',
             },
@@ -68,7 +68,7 @@ class vesselEditor(tk.Tk):
             #What to do in the case it doesn't exist
             
             "FilterLocation": {
-                "Value" : "filterMasks",
+                "Value" : "finalImages",
                 "Type" : 'Folder',
                 "Description" : 'Location to the folder where to save the raw masks',
             },
