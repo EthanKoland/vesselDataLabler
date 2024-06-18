@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import Scale
 import numpy as np
 import tkinter.filedialog
 from os.path import isfile, exists, join
@@ -100,7 +101,7 @@ class vesselEditor(tk.Tk):
         
 
         
-        
+        #Controls for buttons
         self.canvas = canvasEditior(self, imagePath = self.currentImage)
         self.canvas.grid(column=0, row=0, sticky=(tk.N,tk.W,tk.E,tk.S))
         
@@ -437,22 +438,18 @@ class canvasEditior(tk.Frame):
         self.canvas.bind("<B1-ButtonRelease>", self.doneStroke)
         self.canvas.bind("<z>", self.massUndo)
         self.canvas.bind("<x>", self.massRedo)
-        
-        self.canvas.bind("<1>", self.changeLineWidth(3))
-        self.canvas.bind("<2>", self.changeLineWidth(5))
-        self.canvas.bind("<3>", self.changeLineWidth(10))
-        self.canvas.bind("<4>", self.changeLineWidth(20))
+        self.canvas.bind("<MouseWheel>", self.onMouseWheel)
         
         self.canvas.bind("v", self.setColor("white"))
         self.canvas.bind("b", self.eraseFunction(""))
-
+    
         self.draw = self.canvas.create_rectangle((10, 10, 30, 30), fill="white", tags=('palettePen', 'palettewhite'))
         self.canvas.tag_bind(self.draw , "<Button-1>", lambda x: self.setColor("white"))
         self.eraseButton = self.canvas.create_rectangle((10, 35, 30, 55), fill="black", tags=('palettePen', 'paletteErase', 'paletteSelected'))
         self.canvas.tag_bind(self.eraseButton, "<Button-1>", lambda x: self.eraseFunction(x))
         # self.erase = self.canvas.create_rectangle((10, 60, 30, 80), fill="black", tags=('palettePen', 'paletteblack', 'paletteSelected'))
         # self.canvas.tag_bind(self.erase, "<Button-1>", lambda x: self.eraseButton(x))
-
+        """"
         self.smallBrush = self.canvas.create_rectangle((10, 85, 30, 105), fill="black", tags=('paletteSize', 'palette3', 'paletteSizeSelected'))
         self.canvas.tag_bind(self.smallBrush , "<Button-1>", lambda x:self.changeLineWidth(3))
         self.medBrush  = self.canvas.create_rectangle((10, 110, 30, 130), fill="black", tags=('paletteSize', 'palette5'))
@@ -461,8 +458,15 @@ class canvasEditior(tk.Frame):
         self.canvas.tag_bind(self.largeBrush, "<Button-1>", lambda x: self.changeLineWidth(10))
         self.xLargeBrush = self.canvas.create_rectangle((10, 160, 30, 180), fill="black", tags=('paletteSize', 'palette20'))
         self.canvas.tag_bind(self.xLargeBrush, "<Button-1>", lambda x: self.changeLineWidth(20))
-        
-        self.configItems = [self.canvasImage, self.draw, self.eraseButton, self.smallBrush, self.medBrush, self.largeBrush, self.xLargeBrush]
+        """
+
+        # Uses scale method to Update line width
+        self.lineWidthSlider = Scale(parent, from_=1, to=20, orient='horizontal', label='Brush Sizes', command=self.changeLineWidth)
+        self.lineWidthSlider.set(self.lineWidth)
+        self.lineWidthSlider.grid(column=0, row=1, sticky=(tk.W, tk.E))
+
+
+        self.configItems = [self.canvasImage, self.draw, self.eraseButton]
         
         self.setColor('white')
         self.canvas.itemconfigure('palette', width=self.lineWidth)
@@ -663,8 +667,9 @@ class canvasEditior(tk.Frame):
         self.canvas.addtag('paletteSelected', 'withtag', 'paletteErase')
         self.canvas.itemconfigure('paletteSelected', outline='red')
         
-    def changeLineWidth(self,size):
-        self.lineWidth = size
+    #Updated function to convert int
+    def changeLineWidth(self, size):
+        self.lineWidth = int(size)
         # canvas.itemconfigure('currentline', width=lineWidth)
         self.canvas.dtag('paletteSize', 'paletteSizeSelected')
         self.canvas.itemconfigure('paletteSize', outline='gray')
@@ -683,6 +688,22 @@ class canvasEditior(tk.Frame):
         
     def returnMask(self):
         return self.mask
+    
+    def onMouseWheel(self, event):
+        delta = event.delta
+        if delta > 0:
+            #Edit Linewidth for scroll speed
+            self.lineWidth += 0.3
+            if self.lineWidth > 20:
+                self.lineWidth = 20
+        else:
+            #Edit Linewidth for scroll speed
+            self.lineWidth -= 0.3
+            if self.lineWidth < 1:
+                self.lineWidth = 1
+
+        self.lineWidthSlider.set(self.lineWidth)
+        
 
         
         
