@@ -131,7 +131,7 @@ if(__name__ == "__main__"):
     t = np.round(np.arange(0.1, 1, 0.1), 1)
     # testFrangiBetaOne(t)
     t2 = np.arange(1, 20, 2)
-    # testFrangiBetaTwo(t2, FrangiBetaOne=1)
+    testFrangiBetaTwo(t2, FrangiBetaOne=1)
     
     
     
