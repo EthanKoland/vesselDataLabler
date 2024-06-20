@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import Scale , PhotoImage
+from tkinter import Scale
 import numpy as np
 import tkinter.filedialog
 from os.path import isfile, exists, join
@@ -11,6 +11,7 @@ from skimage.filters import threshold_otsu
 import cv2
 import multiprocessing
 from functools import partial
+import numpy as np
 
 
 from PIL import Image, ImageTk, ImageOps
@@ -118,8 +119,6 @@ class vesselEditor(tk.Tk):
         
         self.labelFrame = tk.LabelFrame(self, text="Image Info")
         self.labelFrame.grid(column=1, row=0, sticky=(tk.N,tk.W,tk.E,tk.S))
-       
-
         
         self.loadFolder_button = tk.Button(self.labelFrame, text="Load Folder", command=self.loadFolder)
         self.loadFolder_button.pack()
@@ -244,6 +243,8 @@ class vesselEditor(tk.Tk):
             maskColor = np.array([255,0,0]) * self.data.get("PreviousMaskTransparency", 0).get("Value", 0)
             self.canvas.addSubMask(previousImageMask, maskColor)
             
+        
+        
         if(exists(imageFilterMask)):
             print("filter mask found")
             filterMask = cv2.imread(imageFilterMask)
@@ -263,6 +264,7 @@ class vesselEditor(tk.Tk):
         imageName = imageName.split(".")[0]
         
         return join(self.data["outputLocation"]["Value"], imageName + fileSuffix + ".jpg")
+        
     
     def prevoiusImage(self):
         print("previous image")
@@ -427,7 +429,7 @@ def filter(imagePath, **kwargs):
 
 
 class canvasEditior(tk.Frame):
-    def __init__(self, parent, imagePath = "FrangiFilter/0002.jpg"):
+    def __init__(self, parent, imagePath = "FrangiFilter/0002.jpg", previousImage = None, nextImage = None):
         super().__init__(parent)
         
         
@@ -476,24 +478,11 @@ class canvasEditior(tk.Frame):
         
         self.canvas.bind("v", self.setColor("white"))
         self.canvas.bind("b", self.eraseFunction(""))
-
-        """""
+    
         self.draw = self.canvas.create_rectangle((10, 10, 30, 30), fill="white", tags=('palettePen', 'palettewhite'))
         self.canvas.tag_bind(self.draw , "<Button-1>", lambda x: self.setColor("white"))
         self.eraseButton = self.canvas.create_rectangle((10, 35, 30, 55), fill="black", tags=('palettePen', 'paletteErase', 'paletteSelected'))
         self.canvas.tag_bind(self.eraseButton, "<Button-1>", lambda x: self.eraseFunction(x))
-        """
-
-        self.pencil_img = PhotoImage(file='FrangiFilter/icons/pencil.png').subsample(9)
-        self.eraser_img = PhotoImage(file='FrangiFilter/icons/eraser.png').subsample(9)
-
-        self.draw = self.canvas.create_image(20, 20, image=self.pencil_img, tags=('palettePen', 'palettewhite'))
-        self.canvas.tag_bind(self.draw, "<Button-1>", lambda x: self.setColor("white"))
-
-        self.eraseButton = self.canvas.create_image(20, 45, image=self.eraser_img, tags=('palettePen', 'paletteErase', 'paletteSelected'))
-        self.canvas.tag_bind(self.eraseButton, "<Button-1>", lambda x: self.eraseFunction(x))
-
-
         # self.erase = self.canvas.create_rectangle((10, 60, 30, 80), fill="black", tags=('palettePen', 'paletteblack', 'paletteSelected'))
         # self.canvas.tag_bind(self.erase, "<Button-1>", lambda x: self.eraseButton(x))
         """"
@@ -517,8 +506,8 @@ class canvasEditior(tk.Frame):
         
         self.setColor('white')
         self.canvas.itemconfigure('palette', width=self.lineWidth)
-        self.canvas.itemconfigure('paletteSizeSelected')
-        self.canvas.itemconfigure('paletteSelected')
+        self.canvas.itemconfigure('paletteSizeSelected', outline='blue')
+        self.canvas.itemconfigure('paletteSelected', outline='red')
         
         
         #(action, size, color, x1, y1, x2, y2)
@@ -536,9 +525,9 @@ class canvasEditior(tk.Frame):
         self.erase = False
         self.color = newcolor
         self.canvas.dtag('palettePen', 'paletteSelected')
-        self.canvas.itemconfigure('palettePen')
+        self.canvas.itemconfigure('palettePen', outline='white')
         self.canvas.addtag('paletteSelected', 'withtag', 'palette%s' % self.color)
-        self.canvas.itemconfigure('paletteSelected')
+        self.canvas.itemconfigure('paletteSelected', outline='red')
         
     def draw(self,event):
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
@@ -642,8 +631,6 @@ class canvasEditior(tk.Frame):
             self.drawLine(lastAction[3], lastAction[4], lastAction[5], lastAction[6], lastAction[1], lastAction[2], False)
             # self.drawActions.pop()
             # self.currentAction.pop()
-            
-
     
     def massUndo(self, event):
         
