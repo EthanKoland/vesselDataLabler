@@ -6,7 +6,7 @@ from os.path import isfile, exists, join
 from os import listdir
 from glob import glob
 from popupYamlConfig import congMenu
-from frangiFilter2D import FrangiFilter2D
+from Parameter_Comparions_Scripts.frangiFilter2D import FrangiFilter2D
 from skimage.filters import threshold_otsu
 import cv2
 import multiprocessing
