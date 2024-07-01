@@ -25,7 +25,7 @@ class vesselEditor(tk.Tk):
         self.data = {
             
             "outputLocation": {
-                "Value" : "finalImagesV2",
+                "Value" : "improvedPredictions",
                 "Type" : 'Folder',
                 "Description" : 'The realitive path to the output folder',
             },
@@ -35,7 +35,7 @@ class vesselEditor(tk.Tk):
             #What to do in the case it doesn't exist
             
             "FilterLocation": {
-                "Value" : "finalImages",
+                "Value" : "tempMasks",
                 "Type" : 'Folder',
                 "Description" : 'Location to the folder where to save the raw masks',
             },
@@ -55,6 +55,26 @@ class vesselEditor(tk.Tk):
                 "Description" : 'soze of opening kernal',
             },
             "closingiterations": {
+                "Value" : 1,
+                "Type" : 'Int',
+                "Description" : 'Location to the folder where to save the raw masks',
+            },
+            "erosionKernal": {
+                "Value" : 3,
+                "Type" : 'int',
+                "Description" : 'soze of opening kernal',
+            },
+            "erosionIteration": {
+                "Value" : 1,
+                "Type" : 'Int',
+                "Description" : 'Location to the folder where to save the raw masks',
+            },
+            "dilationKernal": {
+                "Value" : 3,
+                "Type" : 'int',
+                "Description" : 'soze of opening kernal',
+            },
+            "dilationIteration": {
                 "Value" : 1,
                 "Type" : 'Int',
                 "Description" : 'Location to the folder where to save the raw masks',
@@ -116,6 +136,13 @@ class vesselEditor(tk.Tk):
         
         self.closing_button = tk.Button(self.labelFrame, text="Closing", command=self.closing)
         self.closing_button.pack()
+        
+        self.erode_button = tk.Button(self.labelFrame, text="Erode", command=self.erode)
+        self.erode_button.pack()
+        
+        self.dilate_button = tk.Button(self.labelFrame, text="Dilate", command=self.dilate)
+        self.dilate_button.pack()
+        
         
         
         
@@ -193,7 +220,7 @@ class vesselEditor(tk.Tk):
         
         print(nextImage)
         
-        imageFilterMask = self.getOutputName(self.currentImage, "_filtermask")
+        imageFilterMask = self.getOutputName(self.currentImage, "_filtermask", self.data["FilterLocation"]["Value"])
         imageMask = self.getOutputName(self.currentImage, "_mask")
         
         previousImageMask = self.getOutputName(previousImage, "_mask")
@@ -223,12 +250,16 @@ class vesselEditor(tk.Tk):
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)/255.
             mask = np.round(mask)
             self.canvas.drawMask(mask)
+            #improvedPredictions/ARCADE_000500_filtermask.jpg
+            #tempMasks/ARCADE_000500_filtermask.jpg
             
-    def getOutputName(self, fileName, fileSuffix = ""):
+    def getOutputName(self, fileName, fileSuffix = "", folder = None):
         imageName = fileName.split("/")[-1]
         imageName = imageName.split(".")[0]
         
-        return join(self.data["outputLocation"]["Value"], imageName + fileSuffix + ".jpg")
+        folder = self.data["outputLocation"]["Value"] if folder is None else folder
+        
+        return join(folder, imageName + fileSuffix + ".jpg")
     
     def prevoiusImage(self):
         print("previous image")
@@ -280,10 +311,7 @@ class vesselEditor(tk.Tk):
         
         #Load the model
 
-        #Predict 
-        
-     
-        m2 = th2 == 255
+        #Predict
         
         
         if(exists(self.data["FilterLocation"]["Value"])):
@@ -314,6 +342,30 @@ class vesselEditor(tk.Tk):
         
             
         pass
+    
+    def erode(self):
+        mask = self.canvas.returnMask()
+        
+        kernalSize = self.data["erosionKernal"].get("Value", 3)
+        iterations = self.data["erosionIteration"].get("Value", 1)
+        
+        kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernalSize, kernalSize))
+        eroding = cv2.erode(mask.astype(np.uint8), kernal, iterations=iterations)
+        
+        self.canvas.drawMask(eroding, createFilterMask=False)
+        
+    def dilate(self):
+        mask = self.canvas.returnMask()
+        
+        kernalSize = self.data["dilationKernal"].get("Value", 3)
+        iterations = self.data["dilationIteration"].get("Value", 1)
+        
+        kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernalSize, kernalSize))
+        dilation = cv2.dilate(mask.astype(np.uint8), kernal, iterations=iterations)
+        
+        self.canvas.drawMask(dilation, createFilterMask=False)
+        
+        
     
     def opening(self):
         mask = self.canvas.returnMask()
