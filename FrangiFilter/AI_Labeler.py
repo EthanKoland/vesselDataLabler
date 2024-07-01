@@ -276,7 +276,11 @@ class vesselEditor(tk.Tk):
         imageName = imageName.split(".")[0]
         
         
+        #Load current image
         
+        #Load the model
+
+        #Predict 
         
      
         m2 = th2 == 255

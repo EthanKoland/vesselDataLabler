@@ -3,6 +3,9 @@
 CSAngioImages
 InprogressImages
 dataset
+tempMasks
+
+AI_Prediction/Masks/*
 
 FrangiFilter.zip
 *.zip
@@ -16,3 +19,12 @@ CSAngioImages.zip
 */.gitattributes
 */.vscode
 .DS_Store
+AI_Predictions/Images/*
+AI_Predictions/Masks/*
+
+filterMasks/*
+finalImages/*
+improvedPredictions/*
+tempMasks/*
+finalImages/*
+finalImages/*

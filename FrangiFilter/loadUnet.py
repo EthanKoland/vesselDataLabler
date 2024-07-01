@@ -37,14 +37,14 @@ def getData(X_shape, image_path, training_files, flag = "test"):
 # Load training and testing data
 
 
-def loadData(image_path = "./InprogressImages"):
+def loadData(image_path = "./CSAngioImages", dim = 512):
     
     
 # find the intersection between set(A) and set(B). both folders has files with the same name
     training_files = set(os.listdir(image_path))
     print(training_files)
     print("The number of training files is :",len(training_files))
-    dim = 256*2
+    
     X_train = getData(dim,image_path, training_files, flag="train")
 
     print("X_train[0] dims", X_train[0].shape)
@@ -54,6 +54,23 @@ def loadData(image_path = "./InprogressImages"):
     print("images dims", images.shape)
     
     return images
+    
+def loadDataNames(image_path = "./CSAngioImages", dim = 512):
+    training_files = os.listdir(image_path)
+
+    print("The number of training files is :",len(training_files))
+    
+    X_train = getData(dim,image_path, training_files, flag="train")
+
+    print("X_train[0] dims", X_train[0].shape)
+
+    images = np.array(X_train).reshape(len(X_train),dim,dim,1)
+
+    print("images dims", images.shape)
+    
+    return images, training_files
+    
+
     
 
 
@@ -152,20 +169,36 @@ def displayPredictions(train_vol, preds):
 
         plt.show()
         
-def savePredictions(preds, folder = "AI_Predictions"):
+def savePredictions(preds, folder = "AI_Predictions", imageNames = None):
     
+    if(imageNames is None):
+        imageNames = [f"{i}.jpg" for i in range(len(preds))]
+    else:
+        imageNames = [i.replace(".jpg", "_filtermask.jpg") for i in imageNames]
+        
+    assert(len(imageNames) == len(preds))
 
     
-    for i in range(len(preds)):
+    # for i in range(len(preds)):
         
-        t0 = preds[i]
+    #     t0 = preds[i]
     
+    #     t0 = np.round(t0)
+    #     t0 = np.multiply(t0, 255)
+        
+    #     im = Image.fromarray(np.squeeze(t0).astype(np.uint8))
+    #     im.convert("RGB")
+    #     outputString = os.path.join(folder, f"{i}.jpg")
+    #     im.save(outputString)
+    
+    for img, name in zip(preds, imageNames):
+        t0 = img
         t0 = np.round(t0)
         t0 = np.multiply(t0, 255)
         
         im = Image.fromarray(np.squeeze(t0).astype(np.uint8))
         im.convert("RGB")
-        outputString = os.path.join(folder, f"prediction_{i}.jpg")
+        outputString = os.path.join(folder, name)
         im.save(outputString)
         
     print("Predictions saved")
@@ -184,10 +217,13 @@ def savePredictions(preds, folder = "AI_Predictions"):
 #     plt.show()
 
 if(__name__ == "__main__"):
-    images = loadData()
-    model = loadModel()
+    
+    
+    
+    images, names = loadDataNames(image_path="./InprogressImages", dim=512)
+    model = loadModel(weights_path="./FrangiFilter/cxr_reg_weights.best.hdf5")
     preds = predictModel(model, images)
-    savePredictions(preds)
+    savePredictions(preds, folder="tempMasks", imageNames=names)
     displayPredictions(images, preds)
 
 
