@@ -23,11 +23,6 @@
 * Possibly look into denoising the filter
 * Look into other methods to improve the filter
 
-# Project Title
-
-## Overview
-This project utilizes various Python libraries for image processing and machine learning tasks. The code includes functionalities for loading, processing, and analyzing images using OpenCV, TensorFlow, and other relevant libraries.
-
 ## Installation
 To run this project, you need to install the required libraries. You can install them using `pip`.
 
