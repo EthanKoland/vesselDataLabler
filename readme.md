@@ -41,9 +41,6 @@ Run the following command to install these libraries:
 pip install numpy opencv-python tensorflow pandas tqdm matplotlib Pillow scikit-image
 ```
 
-# How to Use
-Sure, here is the "How to Use" section with instructions coded out:
-
 ## How to Use
 
 1. **Download the folder onto your machine:**
